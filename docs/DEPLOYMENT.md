@@ -31,7 +31,7 @@ reviewers ──► reviewer API ───────────────�
 2. Deliver policies as a ConfigMap. Changes are hot-reloaded, and a bundle that fails to compile is rejected while the previous one keeps enforcing:
 
    ```bash
-   kubectl create configmap elodea-policies --from-file=policies/main.rego --from-file=policies/fintech/ --from-file=policies/mcp/
+   kubectl create configmap elodea-policies --from-file=policies/main.rego --from-file=policies/common/ --from-file=policies/fintech/ --from-file=policies/infra/ --from-file=policies/mcp/
    ```
 
 3. Install:
