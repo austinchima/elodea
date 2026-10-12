@@ -6,6 +6,10 @@
 
 ![Go](https://img.shields.io/badge/Go-1.26%2B-00ADD8?logo=go) ![License](https://img.shields.io/badge/License-Apache_2.0-blue) ![OPA](https://img.shields.io/badge/Policy-OPA_Rego-7d9fc3)
 
+![An agent's refunds and wires going through Elodea: a small refund is allowed, a sanctioned wire is denied, a large refund is held, the agent cannot approve it, a reviewer approves, Elodea replays it once, and the audit ledger verifies](./assets/demo.gif)
+
+*Recorded in CI from [`scripts/demo.sh`](scripts/demo.sh) against the Docker Compose stack, so it shows the real system. Run it yourself after the [Quick Start](#quick-start).*
+
 ## Status
 **v2.0.0** is the latest release: production-readiness work (signed images, Helm chart, hot-reloadable policy, externally anchorable audit ledger), single sign-on for reviewers, Slack and webhook notifications for held actions, approve/deny from Slack, an infrastructure policy pack (Kubernetes, Terraform, SQL), and the rename from KiteRail to Elodea. It is a major version because the rename changes header, metric and policy-package names; see [CHANGELOG.md](CHANGELOG.md) before upgrading from 1.x. [Looking for design partners](#design-partners) running agentic workflows in fintech or DevOps.
 
@@ -145,6 +149,8 @@ curl -X POST http://localhost:8080/api/v1/quarantine/<id>/approve \
 curl -H 'Authorization: Bearer sk_reviewer_local_00000000' http://localhost:8080/api/v1/ledger/verify
 ```
 
+For the full walkthrough in the demo above (allow, deny, hold, approve, replay, verify), run `bash scripts/demo.sh`. It needs `curl` and `jq`, and exits non-zero if any step misbehaves.
+
 Compose exposes Postgres on host port `55432`. To run the integration tests from the host, set `ELODEA_POSTGRES_DSN=postgres://elodea:elodea@localhost:55432/elodea?sslmode=disable`.
 
 ## Deploying to production
@@ -159,8 +165,6 @@ helm install elodea deploy/helm/elodea \
 See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for secrets, policy delivery, ledger anchoring, monitoring, and the production checklist. Release images are signed; verify them with the steps in [SECURITY.md](SECURITY.md).
 
 ## Dashboard
-
-![Elodea Dashboard](./assets/dashboard.png)
 
 The reviewer dashboard (HITL inbox and audit ledger) is part of Elodea Cloud and is developed separately. It doesn't ship in this repository. Everything it does goes through the documented reviewer API ([docs/API.md](docs/API.md)), so you can build your own console, or drive reviews from Slack or a ticketing system, with the same guarantees.
 
