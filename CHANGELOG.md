@@ -7,9 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Ships as **2.0.0**: the rename changes header, metric, and policy-package names (see *Changed*). It also carries the 1.2.0 work below, which was never tagged as a separate release.
+## [2.0.0] - 2026-10-12
+
+A major version because the rename changes header, metric, and policy-package names (see *Changed*). It also carries the 1.2.0 work below, which was never tagged as a separate release.
 
 ### Added
+- **Infrastructure policy pack** (`policies/infra/`): Kubernetes, Terraform and database (SQL) rules. Production Kubernetes changes, namespace deletions, Terraform applies that destroy resources or target production, and destructive, unbounded or multi-statement SQL are held for review. Reads, plans, non-production changes and bounded SQL writes are allowed. `terraform.destroy`, any change to a system namespace, and deleting a production or system namespace are denied. Missing or malformed arguments are held or denied, never allowed. Map your MCP server's tool names to the pack with `infra_tool_aliases`; unmapped tools still fall through to default deny.
+- **Design partners** section in the README.
 - **Single sign-on for reviewers and admins (OIDC).** Works with Okta, Entra ID, Auth0, Keycloak and any OIDC provider. The server runs the Authorization Code flow with PKCE and gives the browser only an opaque `HttpOnly` session cookie. Roles come from IdP groups (`oidc.reviewer_groups`, `oidc.admin_groups`), and approvals and denials are recorded under the verified identity. Sessions are server-side (migration `008_sso.sql`), expire after 8h or 1h idle by default, and are revoked on sign-out. Session-authenticated changes require `X-Requested-With: elodea` and an allowed `Origin`. Agents still authenticate with bearer tokens only. Static reviewer/admin tokens become optional break-glass access. Configure with `ELODEA_OIDC_*` or the Helm `oidc` values; see `docs/DEPLOYMENT.md`.
 - **Held-action notifications** to Slack and to a generic webhook signed with HMAC-SHA256 (`X-Elodea-Signature`), so reviewers hear about a held action immediately. Delivered through a Postgres outbox (migration `009_notifications.sql`): survives restarts, retries with backoff, never sent concurrently by two replicas, and skipped if the action was reviewed first. Messages never include tool arguments. Configure with `ELODEA_NOTIFY_SLACK_WEBHOOK_URL`, `ELODEA_NOTIFY_WEBHOOK_URL`, `ELODEA_NOTIFY_WEBHOOK_SECRET` (each with a `_FILE` variant where secret) and `ELODEA_CONSOLE_URL`; new metric `elodea_notifications_total`.
 - **Approve and deny from Slack.** A Slack app posts held actions with Approve and Deny buttons. Clicks are verified with Slack's request signature and workspace, accepted only from users whose Slack email is on `ELODEA_SLACK_REVIEWERS`, applied through the same conflict-safe path as the console, recorded in the ledger under that email, and the message is updated with the outcome. Create the app from `deploy/slack/manifest.yaml`; configure with `ELODEA_SLACK_BOT_TOKEN`, `_SIGNING_SECRET`, `_CHANNEL_ID`, `_TEAM_ID` (required in production), `_REVIEWERS`, and `_API_BASE` for GovSlack. New endpoint `POST /integrations/slack/interactions`.
@@ -18,15 +22,19 @@ Ships as **2.0.0**: the rename changes header, metric, and policy-package names 
 - Docs: SSO and notification guides in `docs/DEPLOYMENT.md`, webhook event format and signature check in `docs/API.md`, an updated architecture (package map, replay sequence, notification outbox) and a current roadmap in `docs/ARCHITECTURE.md`.
 
 ### Fixed
+- The image's Go standard library is 1.26.9, fixing three HIGH denial-of-service CVEs in 1.26.8 (`net/http` Range headers, HTTP/2 SETTINGS floods, `crypto/tls` ECH extensions): CVE-2026-78667, CVE-2026-78669, CVE-2026-97031.
+- The Helm chart's `appVersion` was `2.0.0-dev`, so installing the chart from source pulled an image tag that is never published.
+- The SSN check no longer errors on non-string arguments; it now simply does not match them.
 - `SECURITY.md` pointed vulnerability reports at a repository that doesn't exist, and the README and supported-versions table called 1.2.0 a release although it was never tagged.
 - CI tested policies with OPA 1.18.2 while the server embeds OPA 1.21.1; both now use 1.21.1.
 
 ### Dependencies
-- OPA 1.21.1, go-jose 4.1.5, testify 1.12.1 and two more Go modules; GitHub Actions moved to their Node 24 releases (`checkout` v7, `setup-go` v7, `setup-helm` v5, `setup-qemu-action` v4, `attest-build-provenance` v4, `action-gh-release` v3); `trivy-action` pinned to v0.36.0 by commit.
+- OPA 1.21.1, go-jose 4.1.5, testify 1.12.1 and two more Go modules; GitHub Actions moved to their Node 24 releases (`checkout` v7, `setup-go` v7, `setup-helm` v5, `setup-qemu-action` v4, `attest-build-provenance` v4, `action-gh-release` v3); `trivy-action` pinned to v0.36.0 by commit; `golangci-lint-action` v9, `build-push-action` v7 and `login-action` v4.
 - Dependabot now targets `dev`, and holds the Go builder image on Go 1.26 (patch and digest updates only) until `go.mod`, CI and golangci-lint move together.
 - Slack notifications escape agent-supplied text in the message preview as well as the body, so a tool name cannot trigger `@channel`.
 
 ### Changed
+- **SSN redaction applies to every tool.** `pii_redaction.rego` moved from `policies/fintech/` to `policies/common/`. If you mount policy directories individually (for example as a ConfigMap), add `policies/common/` and `policies/infra/`; `docs/DEPLOYMENT.md` shows the updated command.
 - **Repository and Go module renamed** to `github.com/austinchima/elodea`. GitHub redirects the old `austinchima/KiteRail` URLs. Release images are signed with the new repository identity; see `SECURITY.md`.
 - **Renamed from KiteRail to Elodea.** Product name, binary (`/usr/local/bin/elodea`), container image (`ghcr.io/<owner>/elodea`), Helm chart (`deploy/helm/elodea`), example config (`backend/elodea.example.yaml`), console, and docs.
 - **Environment variables are now `ELODEA_*`.** `KITERAIL_*` names still work: each is applied when its `ELODEA_*` counterpart is unset, and startup logs a deprecation warning listing them.
@@ -284,7 +292,8 @@ ledger, or review.
 - Apache 2.0 license
 - Production README with architecture diagram, quickstart, and policy authoring guide
 
-[Unreleased]: https://github.com/austinchima/elodea/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/austinchima/elodea/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/austinchima/elodea/compare/v1.1.0...v2.0.0
 [1.1.0]: https://github.com/austinchima/elodea/compare/v1.0.0...v1.1.0
 [1.1.0-beta.1]: https://github.com/austinchima/elodea/compare/v1.1.0-alpha...v1.1.0-beta.1
 [1.1.0-alpha]: https://github.com/austinchima/elodea/compare/v1.0.0...v1.1.0-alpha
