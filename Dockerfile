@@ -2,7 +2,7 @@
 # Base images are pinned by digest for reproducible, auditable builds;
 # Dependabot (.github/dependabot.yml) proposes digest bumps.
 
-FROM golang:1.26-alpine@sha256:8ac98ca534ac3f51e1f420a1dd2c15e74c75cfa0f23f3ad27eb5d7236c349a0c AS builder
+FROM golang:1.26-alpine@sha256:3082400e369fa24d5fc60bca20edab3f6d604e0c5a690ec66b295eff4dd87ade AS builder
 
 WORKDIR /build
 COPY backend/go.mod backend/go.sum ./
@@ -21,7 +21,7 @@ FROM gcr.io/distroless/static-debian12:nonroot@sha256:afa5c872c891853ca7fcf1f12c
 ARG VERSION=dev
 LABEL org.opencontainers.image.title="Elodea" \
       org.opencontainers.image.description="Inline policy enforcement proxy for autonomous AI agents" \
-      org.opencontainers.image.source="https://github.com/austinchima/KiteRail" \
+      org.opencontainers.image.source="https://github.com/austinchima/elodea" \
       org.opencontainers.image.licenses="Apache-2.0" \
       org.opencontainers.image.version="${VERSION}"
 
