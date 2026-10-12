@@ -62,7 +62,7 @@ expect_status() {
 field() { jq -r "$1" <<<"$BODY" 2>/dev/null || echo "?"; }
 
 printf '%sElodea: an AI agent moving money, governed by policy%s\n' "$bold" "$reset"
-note "Policies: refunds up to \$1,000 run on their own; larger ones wait for a human; wires to sanctioned jurisdictions are blocked."
+note "Policy: refunds up to \$1,000 run alone, larger ones wait for a human, sanctioned wires are blocked."
 
 for _ in $(seq 1 30); do
   curl -fsS "$URL/readyz" >/dev/null 2>&1 && break
@@ -86,7 +86,8 @@ call_tool stripe.charge.refund '{"charge": "ch_1002", "amount": 1500}'
 expect_status 202
 QID=$(field .quarantine_id)
 [[ -n "$QID" && "$QID" != "?" && "$QID" != "null" ]] || fail "no quarantine_id in: $BODY"
-held "held for human review (quarantine #$QID). Nothing has reached the payments API."
+SHORT_ID="${QID:0:8}"
+held "held for human review (#$SHORT_ID). Nothing has reached the payments API."
 
 step "4. The agent tries to approve its own refund"
 request POST "/api/v1/quarantine/$QID/approve" "$AGENT_TOKEN"
@@ -97,8 +98,8 @@ note "Agents and reviewers are separate trust domains; an agent token can never 
 step "5. A reviewer opens the approval queue"
 request GET "/api/v1/quarantine?status=pending" "$REVIEWER_TOKEN"
 expect_status 200
-ITEM=$(jq -r --arg id "$QID" '.[] | select(.ID == $id) | "#\(.ID)  \(.ToolName)  rule: \(.PolicyRule)"' <<<"$BODY")
-[[ -n "$ITEM" ]] || fail "quarantine #$QID is not in the pending queue"
+ITEM=$(jq -r --arg id "$QID" '.[] | select(.ID == $id) | "#\(.ID[0:8])  \(.ToolName)  rule: \(.PolicyRule)"' <<<"$BODY")
+[[ -n "$ITEM" ]] || fail "quarantine #$SHORT_ID is not in the pending queue"
 note "$ITEM"
 
 step "6. The reviewer approves"
@@ -116,12 +117,12 @@ for _ in $(seq 1 30); do
   fi
   request GET "/api/v1/quarantine?status=replay_failed" "$REVIEWER_TOKEN"
   if jq -e --arg id "$QID" 'any(.[]; .ID == $id)' <<<"$BODY" >/dev/null; then
-    fail "replay of #$QID failed; see: docker compose logs proxy"
+    fail "replay of #$SHORT_ID failed; see: docker compose logs proxy"
   fi
   sleep 1
 done
-[[ "$replayed" == true ]] || fail "replay of #$QID did not finish within 30s"
-ok "replayed with Idempotency-Key kiterail-quarantine-$QID, so it can never run twice"
+[[ "$replayed" == true ]] || fail "replay of #$SHORT_ID did not finish within 30s"
+ok "replayed once, with a stable Idempotency-Key so a retry can never run it twice"
 
 step "8. The audit ledger, oldest first"
 request GET "/api/v1/ledger?limit=6" "$REVIEWER_TOKEN"
