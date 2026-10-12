@@ -4,7 +4,7 @@
 
 | Version | Supported |
 |---------|-----------|
-| `main` (2.0.0, unreleased) | Yes |
+| 2.0.x   | Yes       |
 | 1.1.x   | Yes       |
 | < 1.1   | No        |
 

@@ -2,8 +2,8 @@ apiVersion: v2
 name: elodea
 description: Inline policy enforcement proxy for autonomous AI agents (OPA policy, HITL quarantine, tamper-evident audit ledger)
 type: application
-version: 2.0.0-dev
-appVersion: "2.0.0-dev"
+version: 2.0.0
+appVersion: "2.0.0"
 home: https://github.com/austinchima/elodea
 sources:
   - https://github.com/austinchima/elodea
