@@ -1,0 +1,42 @@
+name: Demo
+
+# Runs scripts/demo.sh against the Docker Compose stack as an end-to-end smoke
+# test, then records it with VHS and uploads assets/demo.gif as an artifact.
+
+on:
+  pull_request:
+    paths:
+      - scripts/demo.sh
+      - scripts/demo.tape
+      - .github/workflows/demo.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  demo:
+    name: Demo smoke test & recording
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Start the stack
+        run: docker compose up -d --build --wait
+      - name: Smoke test
+        run: DEMO_PAUSE=0 bash scripts/demo.sh
+      - name: Reset to an empty ledger for the recording
+        run: |
+          docker compose down -v
+          docker compose up -d --wait
+      - name: Record
+        uses: charmbracelet/vhs-action@v2
+        with:
+          path: scripts/demo.tape
+      - uses: actions/upload-artifact@v7
+        with:
+          name: demo-gif
+          path: assets/demo.gif
+          if-no-files-found: error
+      - name: Stack logs
+        if: failure()
+        run: docker compose logs --no-color
