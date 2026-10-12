@@ -34,7 +34,7 @@ fi
 step() { sleep "$PAUSE"; printf '\n%s%s%s\n' "$bold" "$1" "$reset"; }
 note() { printf '  %s%s%s\n' "$dim" "$1" "$reset"; }
 ok()   { printf '  %s✓ %s%s\n' "$green" "$1" "$reset"; }
-held() { printf '  %s⏸ %s%s\n' "$yellow" "$1" "$reset"; }
+held() { printf '  %s… %s%s\n' "$yellow" "$1" "$reset"; }
 no()   { printf '  %s✗ %s%s\n' "$red" "$1" "$reset"; }
 fail() { printf '\n%sdemo failed: %s%s\n' "$red" "$1" "$reset" >&2; exit 1; }
 

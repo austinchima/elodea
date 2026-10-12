@@ -14,7 +14,7 @@ Set Shell "bash"
 # Tall enough that the whole run (about 44 rows) fits without scrolling.
 Set FontSize 16
 Set Width 1200
-Set Height 1140
+Set Height 1010
 Set Padding 24
 Set TypingSpeed 45ms
 Set Theme "Catppuccin Mocha"
