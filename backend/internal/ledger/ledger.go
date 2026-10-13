@@ -53,11 +53,13 @@ func calculateHash(entry db.LedgerEntry) string {
 
 type Store struct {
 	q *db.Queries
+	// retryAfter waits out a retry backoff; tests replace it to control timing.
+	retryAfter func(time.Duration) <-chan time.Time
 }
 
 func New(sqlDB *sql.DB) (*Store, error) {
 	// Schema is applied by internal/db.Migrate — no ad-hoc DDL here.
-	return &Store{q: db.New(sqlDB)}, nil
+	return &Store{q: db.New(sqlDB), retryAfter: time.After}, nil
 }
 
 // appendLockKey is the transaction-scoped advisory lock that serializes chain
@@ -88,7 +90,7 @@ func (s *Store) appendWithRetry(ctx context.Context, entry db.LedgerEntry) error
 			backoff := time.Duration(1<<uint(attempt)) * 10 * time.Millisecond
 			backoff += time.Duration(rand.Int64N(int64(backoff/2) + 1))
 			select {
-			case <-time.After(backoff):
+			case <-s.retryAfter(backoff):
 			case <-ctx.Done():
 				return fmt.Errorf("ledger append canceled while waiting to retry: %w", ctx.Err())
 			}

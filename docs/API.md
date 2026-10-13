@@ -117,7 +117,7 @@ To understand how Elodea's endpoints work together, here is a complete lifecycle
 ```json
 {
   "status": "ok",
-  "version": "1.1.0",
+  "version": "v2.0.0",
   "uptime_seconds": 1234.56
 }
 ```
