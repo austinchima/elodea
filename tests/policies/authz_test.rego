@@ -105,4 +105,11 @@ decision_probe_inputs := [
 	{"tool": "swift.wire.initiate", "arguments": {"amount": 50000, "jurisdiction": "OFAC_FLAGGED"}, "agent": "a"},
 	{"tool": "swift.wire.initiate", "arguments": {"amount": 500}, "agent": "a"},
 	{"tool": "tools/list", "raw_method": "tools/list", "arguments": {}, "agent": "a"},
+	{"tool": "kubernetes.resource.delete", "arguments": {"namespace": "production", "kind": "Deployment", "name": "api"}, "agent": "a"},
+	{"tool": "kubernetes.resource.delete", "arguments": {"kind": "Namespace", "name": "kube-system"}, "agent": "a"},
+	{"tool": "kubernetes.deployment.scale", "arguments": {"namespace": "staging", "name": "api", "replicas": "x"}, "agent": "a"},
+	{"tool": "terraform.apply", "arguments": {"workspace": "production", "changes": {"add": 0, "change": 0, "destroy": 3}}, "agent": "a"},
+	{"tool": "terraform.destroy", "arguments": {}, "agent": "a"},
+	{"tool": "database.query", "arguments": {"sql": "SELECT 1; DROP TABLE users"}, "agent": "a"},
+	{"tool": "database.query", "arguments": {"sql": 42}, "agent": "a"},
 ]

@@ -85,8 +85,14 @@ func TestStore_Append_BackoffRespectsContextCancellation(t *testing.T) {
 		WillReturnError(&pq.Error{Code: "40001"})
 	mock.ExpectRollback()
 
+	// Cancel exactly when the first backoff starts, and never let the backoff
+	// elapse. (A wall-clock cancel raced the query on slow CI runners: sqlmock
+	// then failed the query itself instead of the backoff observing ctx.Done.)
 	ctx, cancel := context.WithCancel(context.Background())
-	time.AfterFunc(2*time.Millisecond, cancel)
+	store.retryAfter = func(time.Duration) <-chan time.Time {
+		cancel()
+		return make(chan time.Time)
+	}
 
 	start := time.Now()
 	err = store.Append(ctx, db.LedgerEntry{Agent: "agent_x"})
