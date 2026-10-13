@@ -2,3 +2,7 @@
 # core.autocrlf=true would otherwise flag every file as unformatted (and the
 # CI gofmt gate would fail for Windows-developed code).
 *.go text eol=lf
+
+# Shell scripts and VHS tapes run under bash; CRLF line endings break them.
+*.sh text eol=lf
+*.tape text eol=lf
